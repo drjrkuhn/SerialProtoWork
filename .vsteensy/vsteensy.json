@@ -1,0 +1,39 @@
+{
+  "version": "2",
+  "target": "vsCode",
+  "buildSystem": "makefile",
+  "debugSupport": "none",
+  "configurations": [
+    {
+      "name": "default",
+      "guid": "4f82b954-4d18-4221-8e29-2fc12c36f05a",
+      "setupType": "expert",
+      "coreBase": "C:\\Program Files (x86)\\Arduino\\hardware\\teensy\\avr",
+      "compilerBase": "C:\\Program Files (x86)\\Arduino\\hardware\\tools\\arm",
+      "makefileExtension": null,
+      "coreStrategy": "link",
+      "stdLib": "newlib",
+      "sharedLibraries": [
+        "libCBOR",
+        "SLIPStream",
+        "SLIPStream",
+        "PacketSerial"
+      ],
+      "projectLibraries": [
+        "FastCRC",
+        "TimerOne",
+        "EEPROM",
+        "TeensyThreads"
+      ],
+      "board": {
+        "name": "Teensy 4.0",
+        "options": {
+          "USB Type": "Serial",
+          "CPU Speed": "600 MHz",
+          "Optimize": "Faster",
+          "Keyboard Layout": "US English"
+        }
+      }
+    }
+  ]
+}
