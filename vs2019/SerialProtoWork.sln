@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.32106.194
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SerialProtoWork", "..\SerialProtoWork.vcxproj", "{DAFA6B3B-48D0-400C-ADE3-3EB7130CAC42}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMDevice-SharedRuntime", "..\..\..\mmCoreAndDevices\MMDevice\MMDevice-SharedRuntime.vcxproj", "{B8C95F39-54BF-40A9-807B-598DF2821D55}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMCore", "..\..\..\mmCoreAndDevices\MMCore\MMCore.vcxproj", "{36571628-728C-4ACD-A47F-503BA91C5D43}"
@@ -12,6 +10,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SerialManager", "..\..\..\mmCoreAndDevices\DeviceAdapters\SerialManager\SerialManager.vcxproj", "{2EF7ACDC-F742-4CB6-B301-A242F52BE5C3}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SerialProtoWork-firmware", "SerialProtoWork-firmware\SerialProtoWork-firmware.vcxproj", "{31365C53-4584-4F71-AC0B-6F7880166D2B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SerialProtoWork", "..\SerialProtoWork.vcxproj", "{DAFA6B3B-48D0-400C-ADE3-3EB7130CAC42}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,12 +21,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{DAFA6B3B-48D0-400C-ADE3-3EB7130CAC42}.Debug|x64.ActiveCfg = Debug|x64
-		{DAFA6B3B-48D0-400C-ADE3-3EB7130CAC42}.Debug|x64.Build.0 = Debug|x64
-		{DAFA6B3B-48D0-400C-ADE3-3EB7130CAC42}.Debug|x86.ActiveCfg = Debug|x64
-		{DAFA6B3B-48D0-400C-ADE3-3EB7130CAC42}.Release|x64.ActiveCfg = Release|x64
-		{DAFA6B3B-48D0-400C-ADE3-3EB7130CAC42}.Release|x64.Build.0 = Release|x64
-		{DAFA6B3B-48D0-400C-ADE3-3EB7130CAC42}.Release|x86.ActiveCfg = Release|x64
 		{B8C95F39-54BF-40A9-807B-598DF2821D55}.Debug|x64.ActiveCfg = Debug|x64
 		{B8C95F39-54BF-40A9-807B-598DF2821D55}.Debug|x64.Build.0 = Debug|x64
 		{B8C95F39-54BF-40A9-807B-598DF2821D55}.Debug|x86.ActiveCfg = Debug|x64
@@ -53,6 +47,12 @@ Global
 		{31365C53-4584-4F71-AC0B-6F7880166D2B}.Release|x64.Build.0 = Release|x64
 		{31365C53-4584-4F71-AC0B-6F7880166D2B}.Release|x86.ActiveCfg = Release|Win32
 		{31365C53-4584-4F71-AC0B-6F7880166D2B}.Release|x86.Build.0 = Release|Win32
+		{DAFA6B3B-48D0-400C-ADE3-3EB7130CAC42}.Debug|x64.ActiveCfg = Debug|x64
+		{DAFA6B3B-48D0-400C-ADE3-3EB7130CAC42}.Debug|x64.Build.0 = Debug|x64
+		{DAFA6B3B-48D0-400C-ADE3-3EB7130CAC42}.Debug|x86.ActiveCfg = Debug|x64
+		{DAFA6B3B-48D0-400C-ADE3-3EB7130CAC42}.Release|x64.ActiveCfg = Release|x64
+		{DAFA6B3B-48D0-400C-ADE3-3EB7130CAC42}.Release|x64.Build.0 = Release|x64
+		{DAFA6B3B-48D0-400C-ADE3-3EB7130CAC42}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
