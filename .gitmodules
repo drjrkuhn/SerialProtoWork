@@ -1,0 +1,3 @@
+[submodule "lib/MMArduinoCom"]
+	path = lib/MMArduinoCom
+	url = https://github.com/drjrkuhn/MMArduinoCom.git
