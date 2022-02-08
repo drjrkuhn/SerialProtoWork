@@ -13,6 +13,7 @@
 //
 //
 
+#pragma once
 #ifndef _SerialProtoWork_H_
 #define _SerialProtoWork_H_
 
@@ -34,7 +35,7 @@
 #define ERR_NO_PORT_SET 108
 #define ERR_VERSION_MISMATCH 109
 
-class SerialProtoWorkInputMonitorThread;
+//class SerialProtoWorkInputMonitorThread;
 
 class CSerialProtoWorkHub : public HubBase<CSerialProtoWorkHub>  
 {
@@ -70,9 +71,7 @@ public:
    }
    static MMThreadLock& GetLock() {return lock_;}
    void SetShutterState(unsigned state) {shutterState_ = state;}
-   void SetSwitchState(unsigned state) {switchState_ = state;}
    unsigned GetShutterState() {return shutterState_;}
-   unsigned GetSwitchState() {return switchState_;}
 
 private:
    int GetControllerVersion(int&);
@@ -83,7 +82,6 @@ private:
    bool timedOutputActive_;
    int version_;
    static MMThreadLock lock_;
-   unsigned switchState_;
    unsigned shutterState_;
 };
 
@@ -115,157 +113,6 @@ private:
    MM::MMTime changedTime_;
    bool initialized_;
    std::string name_;
-};
-
-class CSerialProtoWorkSwitch : public CStateDeviceBase<CSerialProtoWorkSwitch>  
-{
-public:
-   CSerialProtoWorkSwitch();
-   ~CSerialProtoWorkSwitch();
-  
-   // MMDevice API
-   // ------------
-   int Initialize();
-   int Shutdown();
-  
-   void GetName(char* pszName) const;
-   bool Busy() {return busy_;}
-   
-   unsigned long GetNumberOfPositions()const {return numPos_;}
-
-   // action interface
-   // ----------------
-   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnRepeatTimedPattern(MM::PropertyBase* pProp, MM::ActionType eAct);
-   /*
-   int OnSetPattern(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnGetPattern(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnPatternsUsed(MM::PropertyBase* pProp, MM::ActionType eAct);
-   */
-   int OnSkipTriggers(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnStartTrigger(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnStartTimedOutput(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnBlanking(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnBlankingTriggerDirection(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-   int OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-private:
-   static const unsigned int NUMPATTERNS = 12;
-
-   int OpenPort(const char* pszName, long lnValue);
-   int WriteToPort(long lnValue);
-   int ClosePort();
-   int LoadSequence(unsigned size, unsigned char* seq);
-
-   unsigned pattern_[NUMPATTERNS];
-   unsigned delay_[NUMPATTERNS];
-   int nrPatternsUsed_;
-   unsigned currentDelay_;
-   bool sequenceOn_;
-   bool blanking_;
-   bool initialized_;
-   long numPos_;
-   bool busy_;
-};
-
-class CSerialProtoWorkDA : public CSignalIOBase<CSerialProtoWorkDA>  
-{
-public:
-   CSerialProtoWorkDA(int channel);
-   ~CSerialProtoWorkDA();
-  
-   // MMDevice API
-   // ------------
-   int Initialize();
-   int Shutdown();
-  
-   void GetName(char* pszName) const;
-   bool Busy() {return busy_;}
-
-   // DA API
-   int SetGateOpen(bool open);
-   int GetGateOpen(bool& open) {open = gateOpen_; return DEVICE_OK;};
-   int SetSignal(double volts);
-   int GetSignal(double& volts) {volts_ = volts; return DEVICE_UNSUPPORTED_COMMAND;}     
-   int GetLimits(double& minVolts, double& maxVolts) {minVolts = minV_; maxVolts = maxV_; return DEVICE_OK;}
-   
-   int IsDASequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
-
-   // action interface
-   // ----------------
-   int OnVolts(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnMaxVolt(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-private:
-   int WriteToPort(unsigned long lnValue);
-   int WriteSignal(double volts);
-
-   bool initialized_;
-   bool busy_;
-   double minV_;
-   double maxV_;
-   double volts_;
-   double gatedVolts_;
-   unsigned channel_;
-   unsigned maxChannel_;
-   bool gateOpen_;
-   std::string name_;
-};
-
-class CSerialProtoWorkInput : public CGenericBase<CSerialProtoWorkInput>  
-{
-public:
-   CSerialProtoWorkInput();
-   ~CSerialProtoWorkInput();
-
-   int Initialize();
-   int Shutdown();
-   void GetName(char* pszName) const;
-   bool Busy();
-
-   int OnDigitalInput(MM::PropertyBase* pPropt, MM::ActionType eAct);
-   int OnAnalogInput(MM::PropertyBase* pProp, MM::ActionType eAct, long channel);
-
-   int GetDigitalInput(long* state);
-   int ReportStateChange(long newState);
-
-private:
-   int ReadNBytes(CSerialProtoWorkHub* h, unsigned int n, unsigned char* answer);
-   int SetPullUp(int pin, int state);
-
-   MMThreadLock lock_;
-   SerialProtoWorkInputMonitorThread* mThread_;
-   char pins_[MM::MaxStrLength];
-   char pullUp_[MM::MaxStrLength];
-   int pin_;
-   bool initialized_;
-   std::string name_;
-};
-
-class SerialProtoWorkInputMonitorThread : public MMDeviceThreadBase
-{
-   public:
-      SerialProtoWorkInputMonitorThread(CSerialProtoWorkInput& aInput);
-     ~SerialProtoWorkInputMonitorThread();
-      int svc();
-      int open (void*) { return 0;}
-      int close(unsigned long) {return 0;}
-
-      void Start();
-      void Stop() {stop_ = true;}
-      SerialProtoWorkInputMonitorThread & operator=( const SerialProtoWorkInputMonitorThread & ) 
-      {
-         return *this;
-      }
-
-
-   private:
-      long state_;
-      CSerialProtoWorkInput& aInput_;
-      bool stop_;
 };
 
 

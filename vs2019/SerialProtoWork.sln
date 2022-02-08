@@ -13,6 +13,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SerialProtoWork-firmware", 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SerialProtoWork", "..\SerialProtoWork.vcxproj", "{DAFA6B3B-48D0-400C-ADE3-3EB7130CAC42}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Arduino", "..\..\..\mmCoreAndDevices\DeviceAdapters\Arduino\Arduino.vcxproj", "{2067D4A8-8C32-40D3-BA9F-6B388ECCD714}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Arduino32bitBoards", "..\..\..\mmCoreAndDevices\DeviceAdapters\Arduino32bitBoards\Arduino32bitBoards.vcxproj", "{A0A13E6E-0A7F-42F9-9695-68900BB2455D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -53,6 +57,18 @@ Global
 		{DAFA6B3B-48D0-400C-ADE3-3EB7130CAC42}.Release|x64.ActiveCfg = Release|x64
 		{DAFA6B3B-48D0-400C-ADE3-3EB7130CAC42}.Release|x64.Build.0 = Release|x64
 		{DAFA6B3B-48D0-400C-ADE3-3EB7130CAC42}.Release|x86.ActiveCfg = Release|x64
+		{2067D4A8-8C32-40D3-BA9F-6B388ECCD714}.Debug|x64.ActiveCfg = Debug|x64
+		{2067D4A8-8C32-40D3-BA9F-6B388ECCD714}.Debug|x64.Build.0 = Debug|x64
+		{2067D4A8-8C32-40D3-BA9F-6B388ECCD714}.Debug|x86.ActiveCfg = Debug|x64
+		{2067D4A8-8C32-40D3-BA9F-6B388ECCD714}.Release|x64.ActiveCfg = Release|x64
+		{2067D4A8-8C32-40D3-BA9F-6B388ECCD714}.Release|x64.Build.0 = Release|x64
+		{2067D4A8-8C32-40D3-BA9F-6B388ECCD714}.Release|x86.ActiveCfg = Release|x64
+		{A0A13E6E-0A7F-42F9-9695-68900BB2455D}.Debug|x64.ActiveCfg = Debug|x64
+		{A0A13E6E-0A7F-42F9-9695-68900BB2455D}.Debug|x64.Build.0 = Debug|x64
+		{A0A13E6E-0A7F-42F9-9695-68900BB2455D}.Debug|x86.ActiveCfg = Debug|x64
+		{A0A13E6E-0A7F-42F9-9695-68900BB2455D}.Release|x64.ActiveCfg = Release|x64
+		{A0A13E6E-0A7F-42F9-9695-68900BB2455D}.Release|x64.Build.0 = Release|x64
+		{A0A13E6E-0A7F-42F9-9695-68900BB2455D}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
