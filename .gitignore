@@ -12,6 +12,7 @@
 **/.vs/
 
 **/*.vcxproj.filters
+**/*.vcxproj.user
 
 # dependency files
 *.d
