@@ -1,9 +1,17 @@
 # build
 .vsteensy/build/**
-#.vscode/**
-#makefile
-vs2019/.vs/
-vs2019/build/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+**/build/
+**/x64/
+**/.vs/
+
+**/*.vcxproj.filters
 
 # dependency files
 *.d
