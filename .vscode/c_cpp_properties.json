@@ -5,14 +5,10 @@
       "includePath": [
         "src",
         "C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4",
-        "C:/Users/jrkuhn/Documents/Arduino/libraries/libCBOR/src",
-        "C:/Users/jrkuhn/Documents/Arduino/libraries/SLIPStream/src",
-        "C:/Users/jrkuhn/Documents/Arduino/libraries/SLIPStream/src",
+        "C:/Users/jrkuhn/Documents/Arduino/libraries/MsgPacketizer",
         "C:/Users/jrkuhn/Documents/Arduino/libraries/PacketSerial/src",
-        "lib/FastCRC",
-        "lib/TimerOne",
-        "lib/EEPROM",
-        "lib/TeensyThreads"
+        "C:/Users/jrkuhn/Documents/Arduino/libraries/libCBOR/src",
+        "lib/FastCRC"
       ],
       "forcedInclude": [],
       "defines": [

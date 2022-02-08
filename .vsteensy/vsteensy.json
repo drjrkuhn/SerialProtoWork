@@ -6,7 +6,7 @@
   "configurations": [
     {
       "name": "default",
-      "guid": "4f82b954-4d18-4221-8e29-2fc12c36f05a",
+      "guid": "072344a3-b2dc-41d6-9884-550f428b7a48",
       "setupType": "expert",
       "coreBase": "C:\\Program Files (x86)\\Arduino\\hardware\\teensy\\avr",
       "compilerBase": "C:\\Program Files (x86)\\Arduino\\hardware\\tools\\arm",
@@ -14,16 +14,12 @@
       "coreStrategy": "link",
       "stdLib": "newlib",
       "sharedLibraries": [
-        "libCBOR",
-        "SLIPStream",
-        "SLIPStream",
-        "PacketSerial"
+        "MsgPacketizer",
+        "PacketSerial",
+        "libCBOR"
       ],
       "projectLibraries": [
-        "FastCRC",
-        "TimerOne",
-        "EEPROM",
-        "TeensyThreads"
+        "FastCRC"
       ],
       "board": {
         "name": "Teensy 4.0",
