@@ -1,11 +1,10 @@
 #pragma once
 
 #ifndef __SLIPPROTO_H__
-#    define __SLIPPROTO_H__
+    #define __SLIPPROTO_H__
+    #include <cassert>
 
-#    include <cassert>
-
-/* 
+/*
  * SLIP encoded serial protocol
  *
  * Standard command/request format:
@@ -50,38 +49,30 @@ constexpr char SLIP_ESC_ESC[]{SLIP_ESC, 'E'};
 
 // Use CRTP to implement static polymorphism
 template <class D> // D is the derived type
-class SlipProtocolBase
-{
+class SlipProtocolBase {
  public:
-    size_t writeSlipEscaped(const char* src, size_t src_size, bool writeEnd = false)
-    {
+    size_t writeSlipEscaped(const char* src, size_t src_size, bool writeEnd = false) {
         if (!isReady()) return 0;
         const char* end = src;
         size_t ntx      = 0; // total src buffer characters processed (NOT chars transmitted)
 
-        while (src_size--)
-        {
-            switch (end[0])
-            {
+        while (src_size--) {
+            switch (end[0]) {
                 case SLIP_END:
-                    if (0 < end - src)
-                    {
+                    if (0 < end - src) {
                         ntx += writeBytes(src, end - src);
                     }
-                    if (writeBytes(SLIP_ESC_END, 2) == 2)
-                    {
+                    if (writeBytes(SLIP_ESC_END, 2) == 2) {
                         ntx++; // processed one escape character
                     }
                     end++; // skip escaped char
                     src = end;
                     break;
                 case SLIP_ESC:
-                    if (0 < end - src)
-                    {
+                    if (0 < end - src) {
                         ntx += writeBytes(src, end - src);
                     }
-                    if (writeBytes(SLIP_ESC_ESC, 2) == 2)
-                    {
+                    if (writeBytes(SLIP_ESC_ESC, 2) == 2) {
                         ntx++; // processed one escape character
                     }
                     end++; // skip escaped char
@@ -92,24 +83,20 @@ class SlipProtocolBase
             }
         }
         // write any remaining characters
-        if (0 < end - src)
-        {
+        if (0 < end - src) {
             ntx += writeBytes(src, end - src);
         }
-        if (writeEnd)
-        {
+        if (writeEnd) {
             ntx += writeBytes(&SLIP_END, 1);
         }
         return ntx;
     }
 
-    size_t readSlipEscaped(char* dest, size_t dest_size)
-    {
+    size_t readSlipEscaped(char* dest, size_t dest_size) {
         if (!isReady()) return 0;
         // leave room for SLIP_END at end of buffer
         size_t nread = readBytesUntil(dest, dest_size - 1, SLIP_END);
-        if (nread == 0)
-        {
+        if (nread == 0) {
             return 0;
         }
         Serial.print("\t> read ");
@@ -118,64 +105,49 @@ class SlipProtocolBase
         size_t remaining = nread;
         size_t nrx       = 0;
         bool misread     = false;
-        while (remaining--)
-        {
-            if (src[0] == SLIP_ESC)
-            {
-                if (remaining > 0 && src[1] == SLIP_ESC_END[1])
-                {
+        while (remaining--) {
+            if (src[0] == SLIP_ESC) {
+                if (remaining > 0 && src[1] == SLIP_ESC_END[1]) {
                     dest[0] = SLIP_END;
                     src++;
-                }
-                else if (remaining > 0 && src[1] == SLIP_ESC_ESC[1])
-                {
+                } else if (remaining > 0 && src[1] == SLIP_ESC_ESC[1]) {
                     dest[0] = SLIP_ESC;
                     src++;
-                }
-                else
-                {
+                } else {
                     dest[0] = SLIP_ESC;
                     misread = true;
                 }
-            }
-            else
-            {
+            } else {
                 dest[0] = src[0];
             }
             src++;
             dest++;
             nrx++;
         }
-        if (nrx > 0 && !misread)
-        {
+        if (nrx > 0 && !misread) {
             dest[0] = SLIP_END;
             nrx++;
         }
         return nrx;
     }
 
-    size_t writeBytes(const char* buffer, size_t size)
-    {
+    size_t writeBytes(const char* buffer, size_t size) {
         return static_cast<D*>(this)->writeBytes_impl(buffer, size);
     }
 
-    size_t readBytesUntil(char* buffer, size_t size, char terminator)
-    {
+    size_t readBytesUntil(char* buffer, size_t size, char terminator) {
         return static_cast<D*>(this)->readBytesUntil_impl(buffer, size, terminator);
     }
 
-    bool hasBytes()
-    {
+    bool hasBytes() {
         return static_cast<D*>(this)->hasBytes_impl();
     }
 
-    void writeNow()
-    {
+    void writeNow() {
         static_cast<D*>(this)->writeNow_impl();
     }
 
-    bool isReady()
-    {
+    bool isReady() {
         return static_cast<D*>(this)->isReady_impl();
     }
 
@@ -183,34 +155,29 @@ class SlipProtocolBase
     /** Write several bytes to the output. The term character should be included
     in the buffer, or you can use a single writeByte() to write
     the term character. */
-    size_t writeBytes_impl(const char* buffer, size_t size)
-    {
+    size_t writeBytes_impl(const char* buffer, size_t size) {
         assert(false);
         return 0;
     }
 
     /** Read a string of bytes from the input UNTIL a terminator character is received, or a
     timeout occurrs. The terminator character is NOT added to the end of the buffer. */
-    size_t readBytesUntil_impl(char* buffer, size_t size, char terminator)
-    {
+    size_t readBytesUntil_impl(char* buffer, size_t size, char terminator) {
         assert(false);
         return 0;
     }
 
-    bool hasBytes_impl()
-    {
+    bool hasBytes_impl() {
         assert(false);
         return false;
     }
 
     void writeNow_impl() { assert(false); }
 
-    bool isReady_impl()
-    {
+    bool isReady_impl() {
         assert(false);
         return false;
     }
 };
-
 
 #endif // #ifndef __SLIPCRC_H__
