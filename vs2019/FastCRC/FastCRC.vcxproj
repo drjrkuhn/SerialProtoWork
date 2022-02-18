@@ -13,8 +13,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{31365c53-4584-4f71-ac0b-6f7880166d2b}</ProjectGuid>
-    <RootNamespace>SerialProtoWorkfirmware</RootNamespace>
+    <ProjectGuid>{40e1042b-71b8-4b5a-b74c-e06e40c1e43c}</ProjectGuid>
+    <RootNamespace>FastCRC</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -57,8 +57,6 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>
-      </AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -73,8 +71,6 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>
-      </AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -84,15 +80,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="..\..\.clang-format" />
-    <None Include="..\..\.gitignore" />
-    <None Include="..\..\makefile" />
+    <ClInclude Include="..\..\lib\FastCRC\FastCRC.h" />
+    <ClInclude Include="..\..\lib\FastCRC\FastCRC_cpu.h" />
+    <ClInclude Include="..\..\lib\FastCRC\FastCRC_tables.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\firmware\main.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\firmware\slipproto.h" />
+    <ClCompile Include="..\..\lib\FastCRC\FastCRChw.cpp" />
+    <ClCompile Include="..\..\lib\FastCRC\FastCRCsw.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

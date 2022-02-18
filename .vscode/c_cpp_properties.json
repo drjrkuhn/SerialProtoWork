@@ -3,7 +3,7 @@
     {
       "name": "VisualTeensy",
       "includePath": [
-        "src",
+        "firmware",
         "C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4",
         "C:/Users/jrkuhn/Documents/Arduino/libraries/MsgPacketizer",
         "C:/Users/jrkuhn/Documents/Arduino/libraries/PacketSerial/src",
@@ -14,6 +14,7 @@
       "defines": [
         "__IMXRT1062__",
         "TEENSYDUINO=156",
+        "XXXARDUINO_TEENSY41",
         "ARDUINO_TEENSY40",
         "F_CPU=600000000",
         "USB_SERIAL",
