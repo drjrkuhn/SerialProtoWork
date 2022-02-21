@@ -2,14 +2,14 @@
 // This supports most of C++14
 
 #include "Arduino.h"
-#include <deque>
-#include "slipproto.h"
 #include "arduinoslip.h"
+#include "slipproto.h"
+#include <deque>
 
+using namespace sproto;
 ArduinoSlipProtocol<usb_serial_class> SlipSerial(Serial);
 
-void setup()
-{
+void setup() {
     SlipSerial.begin();
     Serial.println("========== RESET ==========");
 }
@@ -17,25 +17,48 @@ void setup()
 const size_t rxbuffer_size = 128;
 char rxbuffer[rxbuffer_size];
 
-void loop()
-{
-    String out1 = "Lorus Ipsum";
-    String out2 = "Favius## Rex\\ \\\\#\\##Aeturnum padre##";
-    SlipSerial.writeSlipEscaped(out1.c_str(), out1.length(), true);
-    Serial.println();
-    SlipSerial.writeSlipEscaped(out2.c_str(), out2.length(), true);
-    Serial.println();
-    Serial.println("Waiting for input");
-    delay(1000);
-    size_t bytes_read = SlipSerial.readSlipEscaped(rxbuffer, rxbuffer_size);
-    if (bytes_read > 0) {
-        Serial.print("Read ");
+int outrep = 0;
+
+void loop() {
+    if (outrep++ < 5) {
+        String out1 = "Lorus Ipsum";
+        String out2 = "Favius## Rex\\ \\\\#\\##Aeturnum padre##";
+        Serial.print("   >>");
+        SlipSerial.writeSlipEscaped(out1.c_str(), out1.length(), true);
+        Serial.println();
+        Serial.print("   >>");
+        SlipSerial.writeSlipEscaped(out2.c_str(), out2.length(), true);
+        Serial.println();
+    }
+    // Serial.println("Waiting for input");
+    // delay(500);
+    size_t bytes_read = 0;
+    error_t err       = SlipSerial.readSlipEscaped(rxbuffer, rxbuffer_size, bytes_read);
+    if (err != NO_ERROR) {
+        if (err == ERROR_TIMEOUT) {
+            Serial.print("!!timeout ");
+        } else {
+            Serial.print("!!error ");
+            Serial.print(err);
+        }
+        if (bytes_read > 0) {
+            Serial.print("<<[");
+            Serial.print(bytes_read);
+            Serial.print("]");
+            rxbuffer[bytes_read] = '\0';
+            Serial.print(rxbuffer);
+        }
+        Serial.println();
+        SlipSerial.clearInput();
+    } else if (bytes_read > 0) {
+        Serial.print("<<[");
         Serial.print(bytes_read);
-        Serial.print(" bytes: ");
+        Serial.print("]");
         rxbuffer[bytes_read] = '\0';
         Serial.println(rxbuffer);
     } else {
-        Serial.println("==no input==");
+        // Serial.println("==no input==");
+        // SlipSerial.clearInput();
     }
-    delay(1000);
+    // delay(1000);
 }

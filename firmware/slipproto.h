@@ -41,143 +41,233 @@
  *
  */
 
-constexpr char SLIP_END = '#';  //= 0300;   //** 0xC0   End of packet;
-constexpr char SLIP_ESC = '\\'; // = 0333;     //** 0xDB   Escape character
+namespace sproto {
+    constexpr char SLIP_END = '#';  //= 0300;   //** 0xC0   End of packet;
+    constexpr char SLIP_ESC = '\\'; // = 0333;     //** 0xDB   Escape character
 
-constexpr char SLIP_ESC_END[]{SLIP_ESC, 'N'};
-constexpr char SLIP_ESC_ESC[]{SLIP_ESC, 'E'};
+    constexpr char SLIP_ESC_END[]{SLIP_ESC, 'N'};
+    constexpr char SLIP_ESC_ESC[]{SLIP_ESC, 'E'};
 
-// Use CRTP to implement static polymorphism
-template <class D> // D is the derived type
-class SlipProtocolBase {
- public:
-    size_t writeSlipEscaped(const char* src, size_t src_size, bool writeEnd = false) {
-        if (!isReady()) return 0;
-        const char* end = src;
-        size_t ntx      = 0; // total src buffer characters processed (NOT chars transmitted)
+    typedef int error_t;
 
-        while (src_size--) {
-            switch (end[0]) {
-                case SLIP_END:
-                    if (0 < end - src) {
-                        ntx += writeBytes(src, end - src);
-                    }
-                    if (writeBytes(SLIP_ESC_END, 2) == 2) {
-                        ntx++; // processed one escape character
-                    }
-                    end++; // skip escaped char
-                    src = end;
-                    break;
-                case SLIP_ESC:
-                    if (0 < end - src) {
-                        ntx += writeBytes(src, end - src);
-                    }
-                    if (writeBytes(SLIP_ESC_ESC, 2) == 2) {
-                        ntx++; // processed one escape character
-                    }
-                    end++; // skip escaped char
-                    src = end;
-                    break;
-                default:
-                    end++;
+    constexpr error_t NO_ERROR      = 0;
+    constexpr error_t ERROR_TIMEOUT = -1;
+    constexpr error_t ERROR_BUFFER = -2;
+    constexpr error_t ERROR_STREAM = -3;
+
+    /**
+     * @brief Base class for SLIP + CRC protocol communications
+     * 
+     * @tparam D Derived class used for CRTP implementation of static polymorphism
+     */
+    template <class D> // D is the derived type
+    class SlipProtocolBase {
+     public:
+        size_t writeSlipEscaped(const char* src, size_t src_size, bool writeEnd = false) {
+            if (!isStreamReady()) 
+                return 0;
+            const char* end = src;
+            size_t ntx      = 0; // total src buffer characters processed (NOT chars transmitted)
+
+            while (src_size--) {
+                switch (end[0]) {
+                    case SLIP_END:
+                        if (0 < end - src) {
+                            ntx += writeBytes(src, end - src);
+                        }
+                        if (writeBytes(SLIP_ESC_END, 2) == 2) {
+                            ntx++; // processed one escape character
+                        }
+                        end++; // skip escaped char
+                        src = end;
+                        break;
+                    case SLIP_ESC:
+                        if (0 < end - src) {
+                            ntx += writeBytes(src, end - src);
+                        }
+                        if (writeBytes(SLIP_ESC_ESC, 2) == 2) {
+                            ntx++; // processed one escape character
+                        }
+                        end++; // skip escaped char
+                        src = end;
+                        break;
+                    default:
+                        end++;
+                }
             }
+            // write any remaining characters
+            if (0 < end - src) {
+                ntx += writeBytes(src, end - src);
+            }
+            if (writeEnd) {
+                ntx += writeBytes(&SLIP_END, 1);
+            }
+            return ntx;
         }
-        // write any remaining characters
-        if (0 < end - src) {
-            ntx += writeBytes(src, end - src);
-        }
-        if (writeEnd) {
-            ntx += writeBytes(&SLIP_END, 1);
-        }
-        return ntx;
-    }
 
-    size_t readSlipEscaped(char* dest, size_t dest_size) {
-        if (!isReady()) return 0;
-        // leave room for SLIP_END at end of buffer
-        size_t nread = readBytesUntil(dest, dest_size - 1, SLIP_END);
-        if (nread == 0) {
+        error_t readSlipEscaped(char* dest, size_t dest_size, size_t& nread) {
+            if (!isStreamReady()) 
+                return ERROR_STREAM;
+            // leave room for SLIP_END at end of buffer
+            error_t err = readBytesUntil(dest, dest_size - 1, SLIP_END, nread);
+            if (err != NO_ERROR) {
+                return err;
+            }
+            if (nread == 0) {
+                return ERROR_TIMEOUT;
+            }
+            char* src        = dest;
+            size_t remaining = nread;
+            size_t nrx       = 0;
+            bool misread     = false;
+            while (remaining--) {
+                if (src[0] == SLIP_ESC) {
+                    if (remaining > 0 && src[1] == SLIP_ESC_END[1]) {
+                        dest[0] = SLIP_END;
+                        src++;
+                    } else if (remaining > 0 && src[1] == SLIP_ESC_ESC[1]) {
+                        dest[0] = SLIP_ESC;
+                        src++;
+                    } else {
+                        dest[0] = SLIP_ESC;
+                        misread = true;
+                    }
+                } else {
+                    dest[0] = src[0];
+                }
+                src++;
+                dest++;
+                nrx++;
+            }
+            if (nrx > 0 && !misread) {
+                dest[0] = SLIP_END;
+                nrx++;
+            }
+            nread = nrx;
+            return NO_ERROR;
+        }
+
+        /**
+         * @brief Writes characters contained in buffer to stream.
+         *
+         * @param buffer buffer to write
+         * @param size size of buffer to write
+         * @returns number of characters written to the stream
+         */
+        size_t writeBytes(const char* buffer, size_t size) {
+            return static_cast<D*>(this)->writeBytes_(buffer, size);
+        }
+
+        /**
+         * @brief Read a string of bytes from the input UNTIL a terminator character is received
+         *  or a timeout occurs. The terminator character is NOT added to the end of the buffer.
+         *  timeout period is implementation defined.
+         * 
+         * @param buffer    buffer to read. Buffer is not necessarily null terminated after read
+         * @param size      total size of buffer to read
+         * @param terminator terminator character to look for
+         * @param[out] nread number of characters read
+         * @returns
+         *  - ERROR_TIMEOUT timeout occurred before terminating character was found
+         *  - ERROR_BUFFER  read buffer too small
+         *  - NO_ERROR      terminator found and read complete    
+         */
+        error_t readBytesUntil(char* buffer, size_t size, char terminator, size_t& nread) {
+            return static_cast<D*>(this)->readBytesUntil_(buffer, size, terminator, nread);
+        }
+
+        /**
+         * @brief Does the stream have bytes in the receive buffer?
+         * 
+         * @return true if input received
+         * @return false if no input detected
+         */
+        bool hasBytes() {
+            return static_cast<D*>(this)->hasBytes_();
+        }
+
+        /**
+         * @brief flush (write) the contents of the transmit buffer immediately.
+         * Required by Teensy USB implementation if transmission is less than the
+         * 64 byte USB buffer size.
+         * 
+         */
+        void writeNow() {
+            static_cast<D*>(this)->writeNow_();
+        }
+
+        /**
+         * @brief clear (flush) the contents of the receive buffer immediately.
+         */
+        void clearInput() {
+            static_cast<D*>(this)->clearInput_();
+        }
+
+        /**
+         * @brief Is the stream ready for transmission and reception? Usually set to
+         * true after startup
+         * 
+         * @return true     stream is ready in both directions
+         * @return false    stream has not yet been started
+         */
+        bool isStreamReady() {
+            return static_cast<D*>(this)->isStreamReady_();
+        }
+
+     protected:
+        /**
+         * \copydoc SlipProtocolBase::writeBytes
+         * Implemented by subclass.
+         */
+        size_t writeBytes_(const char* buffer, size_t size) {
+            assert(false);
             return 0;
         }
-        Serial.print("\t> read ");
-        Serial.println(nread);
-        char* src        = dest;
-        size_t remaining = nread;
-        size_t nrx       = 0;
-        bool misread     = false;
-        while (remaining--) {
-            if (src[0] == SLIP_ESC) {
-                if (remaining > 0 && src[1] == SLIP_ESC_END[1]) {
-                    dest[0] = SLIP_END;
-                    src++;
-                } else if (remaining > 0 && src[1] == SLIP_ESC_ESC[1]) {
-                    dest[0] = SLIP_ESC;
-                    src++;
-                } else {
-                    dest[0] = SLIP_ESC;
-                    misread = true;
-                }
-            } else {
-                dest[0] = src[0];
-            }
-            src++;
-            dest++;
-            nrx++;
+
+        /**
+         * \copydoc SlipProtocolBase::readBytesUntil
+         * Implemented by subclass.
+         */
+        error_t readBytesUntil_(char* buffer, size_t size, char terminator, size_t& nread) {
+            assert(false);
+            return ERROR_TIMEOUT;
         }
-        if (nrx > 0 && !misread) {
-            dest[0] = SLIP_END;
-            nrx++;
+
+        /**
+         * \copydoc SlipProtocolBase::hasBytes
+         * Implemented by subclass.
+         */
+        bool hasBytes_() {
+            assert(false);
+            return false;
         }
-        return nrx;
-    }
 
-    size_t writeBytes(const char* buffer, size_t size) {
-        return static_cast<D*>(this)->writeBytes_impl(buffer, size);
-    }
+        /**
+         * \copydoc SlipProtocolBase::writeNow
+         * Implemented by subclass.
+         */
+        void writeNow_() {
+            assert(false);
+        }
 
-    size_t readBytesUntil(char* buffer, size_t size, char terminator) {
-        return static_cast<D*>(this)->readBytesUntil_impl(buffer, size, terminator);
-    }
+        /**
+         * \copydoc SlipProtocolBase::clearInput
+         * Implemented by subclass.
+         */
+        void clearInput_() {
+            assert(false);
+        }
 
-    bool hasBytes() {
-        return static_cast<D*>(this)->hasBytes_impl();
-    }
+        /**
+         * \copydoc SlipProtocolBase::isStreamReady
+         * Implemented by subclass.
+         */
+        bool isStreamReady_() {
+            assert(false);
+            return false;
+        }
+    };
 
-    void writeNow() {
-        static_cast<D*>(this)->writeNow_impl();
-    }
-
-    bool isReady() {
-        return static_cast<D*>(this)->isReady_impl();
-    }
-
- protected:
-    /** Write several bytes to the output. The term character should be included
-    in the buffer, or you can use a single writeByte() to write
-    the term character. */
-    size_t writeBytes_impl(const char* buffer, size_t size) {
-        assert(false);
-        return 0;
-    }
-
-    /** Read a string of bytes from the input UNTIL a terminator character is received, or a
-    timeout occurrs. The terminator character is NOT added to the end of the buffer. */
-    size_t readBytesUntil_impl(char* buffer, size_t size, char terminator) {
-        assert(false);
-        return 0;
-    }
-
-    bool hasBytes_impl() {
-        assert(false);
-        return false;
-    }
-
-    void writeNow_impl() { assert(false); }
-
-    bool isReady_impl() {
-        assert(false);
-        return false;
-    }
-};
+}; // namespace sproto
 
 #endif // #ifndef __SLIPCRC_H__

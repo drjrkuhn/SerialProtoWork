@@ -7,55 +7,70 @@
     #include <Arduino.h>
     #include <Stream.h>
 
-// SLIP encoded serial protocol
+namespace sproto {
 
-template <typename S>
-class ArduinoSlipProtocol : public SlipProtocolBase<ArduinoSlipProtocol<S>> {
-    typedef SlipProtocolBase<ArduinoSlipProtocol<S>> BASE;
-    friend BASE;
+    template <typename S>
+    class ArduinoSlipProtocol : public SlipProtocolBase<ArduinoSlipProtocol<S>> {
+        typedef SlipProtocolBase<ArduinoSlipProtocol<S>> BASE;
+        friend BASE;
 
- public:
-    ArduinoSlipProtocol(S& stream) : stream_(stream) {
-    }
-    void begin() {
-        stream_.begin(115200);
-        while (!stream_) {
-            ; // wait for serial port to connect. Needed for native USB port only
+     public:
+        ArduinoSlipProtocol(S& stream) : stream_(stream), timeout_(999) {
         }
-    }
+        void begin() {
+            stream_.begin(115200);
+            while (!stream_) {
+                ; // wait for serial port to connect. Needed for native USB port only
+            }
+        }
 
-    void end() {
-        stream_.end();
-    }
+        void end() {
+            stream_.end();
+        }
 
- protected:
-    size_t writeBytes_impl(const char* buffer, size_t size) {
-        return stream_.write(buffer, size);
-    }
+     protected:
+        /** \copydoc SlipProtocolBase::writeBytes_ */
+        size_t writeBytes_(const char* buffer, size_t size) {
+            return stream_.write(buffer, size);
+        }
 
-    /** Read a string of bytes from the input UNTIL a terminator character is received, or a
-    timeout occurrs. The terminator character is NOT added to the end of the buffer. */
-    size_t readBytesUntil_impl(char* buffer, size_t size, char terminator) {
-        return stream_.readBytesUntil(terminator, buffer, size);
-    }
+        /** \copydoc SlipProtocolBase::readBytesUntil_ */
+        error_t readBytesUntil_(char* buffer, const size_t size, const char terminator, size_t& nread) {
+            // return Serial.readBytesUntil(terminator, buffer, size);
+            unsigned long startMillis = millis();
+            nread                     = stream_.readBytesUntil(terminator, buffer, size);
+            if (millis() - startMillis >= timeout_) {
+                return ERROR_TIMEOUT;
+            }
+            return NO_ERROR;
+        }
 
-    bool hasBytes_impl() {
-        return stream_.available();
-    }
+        /** \copydoc SlipProtocolBase::hasBytes_ */
+        bool hasBytes_() {
+            return stream_.available();
+        }
 
-    void writeNow_impl() {
-    #ifdef TEENSYDUINO
-        stream_.send_now();
-    #endif
-        return true;
-    }
+        /** \copydoc SlipProtocolBase::writeNow_ */
+        void writeNow_() {
+            stream_.flush();
+            return true;
+        }
 
-    bool isReady_impl() {
-        return stream_;
-    }
+        /** \copydoc SlipProtocolBase::clearInput_ */
+        void clearInput_() {
+            Serial.clear();
+        }
 
-    // send_now_fn send_now_fn_;
-    S& stream_;
-};
+        /** \copydoc SlipProtocolBase::isStreamReady_ */
+        bool isStreamReady_() {
+            return stream_;
+        }
+
+
+        S& stream_;             ///< Aruino stream to write to
+        unsigned long timeout_; ///< Terminated read timeout in msec
+    };
+
+}; // namespace
 
 #endif // #ifndef __ARDUINOSLIP_H__
