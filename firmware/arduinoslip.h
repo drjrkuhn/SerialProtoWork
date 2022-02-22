@@ -10,31 +10,12 @@
 
 namespace sproto {
 
-    // template <class D>
-    // class CRCKermit {
-    // public:
-    //     void reset() {
-    //         static_cast<D*>(this)->reset_();
-    //     }
-    //     uint16_t calc(uint8_t* buf, size_t size) {
-    //         return static_cast<D*>(this)->calc(buf, size);
-    //     }
-    // };
-
-    // class ArduinoCRCKermit : CRCKermit<ArduinoCRCKermit> {
-    //     public:
-    //     ArduinoCRCKermit() {}
-    //     void reset_() {
-    //         crc16_.kermit(NULL,0);
-    //     }
-    //     uint16_t calc_(const uint8_t* buf, size_t size) {
-    //         return crc16_.kermit_upd(buf, size);
-    //     }
-
-    //     FastCRC16 crc16_;
-    // };
-
-    template <typename S>
+    /**
+     * @brief Arduino/Teensy specific SLIP + CRC protocol implementation.
+     *
+     * @tparam S Stream class to use. Usually <Serial>, <Serial1>, <Serial2>, etc.
+     */
+    template <class S>
     class ArduinoSlipProtocol : public SlipProtocolBase<ArduinoSlipProtocol<S>> {
         typedef SlipProtocolBase<ArduinoSlipProtocol<S>> BASE;
         friend BASE;
@@ -54,49 +35,76 @@ namespace sproto {
         }
 
      protected:
-        /** \copydoc SlipProtocolBase::writeBytes_ */
-        size_t writeBytes_(const char* buffer, size_t size) {
-            return stream_.write(buffer, size);
+        /**
+         * \copydoc SlipProtocolBase::writeBytes
+         * CRTP implementation.
+         */
+        size_t writeBytes_impl(const uint8_t* buffer, size_t size) {
+            return stream_.write(reinterpret_cast<const char*>(buffer), size);
         }
 
-        /** \copydoc SlipProtocolBase::readBytesUntil_ */
-        error_t readBytesUntil_(char* buffer, const size_t size, const char terminator, size_t& nread) {
-            // return Serial.readBytesUntil(terminator, buffer, size);
-            unsigned long startMillis = millis();
-            nread                     = stream_.readBytesUntil(terminator, buffer, size);
+        /**
+         * \copydoc SlipProtocolBase::readBytesUntil
+         * CRTP implementation.
+         */
+        error_t readBytesUntil_impl(uint8_t* buffer, const size_t size, const char terminator, size_t& nread) {
+            const unsigned long startMillis = millis();
+            // Arduino specific implementation. Could have its own timeout.
+            // Kludg: Keep our timeout shorter.
+            // calls Serial.readBytesUntil(terminator, buffer, size) or similar.
+            nread = stream_.readBytesUntil(terminator, reinterpret_cast<char*>(buffer), size);
             if (millis() - startMillis >= timeout_) {
                 return ERROR_TIMEOUT;
             }
             return NO_ERROR;
         }
 
-        /** \copydoc SlipProtocolBase::hasBytes_ */
-        bool hasBytes_() {
+        /**
+         * \copydoc SlipProtocolBase::hasBytes
+         * CRTP implementation.
+         */
+        bool hasBytes_impl() {
             return stream_.available();
         }
 
-        /** \copydoc SlipProtocolBase::writeNow_ */
-        void writeNow_() {
+        /**
+         * \copydoc SlipProtocolBase::writeNow
+         * CRTP implementation.
+         */
+        void writeNow_impl() {
             stream_.flush();
             return true;
         }
 
-        /** \copydoc SlipProtocolBase::clearInput_ */
-        void clearInput_() {
+        /**
+         * \copydoc SlipProtocolBase::clearInput
+         */
+        void clearInput_impl() {
             Serial.clear();
         }
 
-        /** \copydoc SlipProtocolBase::isStreamReady_ */
-        bool isStreamReady_() {
+        /**
+         * \copydoc SlipProtocolBase::isStreamReady
+         * CRTP implementation
+         */
+        bool isStreamReady_impl() {
             return stream_;
         }
-        
-        void crcKermitReset_() {
+
+        /**
+         * \copydoc SlipProtocolBase::crcKermitReset
+         * CRTP implementation
+         */
+        void crcKermitReset_impl() {
             crc_.kermit(NULL, 0);
         }
 
-        uint16_t crcKermitCalc_(const char* src, size_t size) {
-            return crc_.kermit_upd(reinterpret_cast<const uint8_t*>(src), size);
+        /**
+         * \copydoc SlipProtocolBase::crcKermitCalc
+         * CRTP implementation
+         */
+        uint16_t crcKermitCalc_impl(const uint8_t* src, size_t size) {
+            return crc_.kermit_upd(src, size);
         }
 
         S& stream_;             ///< Aruino stream to write to

@@ -3,6 +3,7 @@
 #ifndef __SLIPPROTO_H__
     #define __SLIPPROTO_H__
     #include <cassert>
+    #include <cctype>
 
 /*
  * SLIP encoded serial protocol
@@ -12,7 +13,7 @@
  *	SLIP-escaped frame containing
  *		CBOR-encoded command or request
  *		CBOR-encoded parameters
- *		16-bit CRC CCITT format of non-escaped frame
+ *		16-bit CRC CCITT/KERMIT format of non-escaped frame
  *	SLIP_END
  *
  * Simple command ACK/NAK
@@ -24,7 +25,7 @@
  *	SLIP-escaped frame containing
  *		CBOR-encoded command echo
  *		CBOR-encoded parameters
- *		16-bit CRC CCITT format of non-escaped frame
+ *		16-bit CRC CCITT/KERMIT format of non-escaped frame
  *	SLIP_END
  *
  * Simple query NAK
@@ -36,32 +37,31 @@
  *	SLIP-escaped frame containing
  *		CBOR-encoded device version
  *		CBOR-encoded device description
- *		16-bit CRC CCITT format of non-escaped frame
+ *		16-bit CRC CCITT/KERMIT format of non-escaped frame
  *	SLIP_END
  *
  */
 
 namespace sproto {
-    constexpr char SLIP_END = '#';  //= 0300;   //** 0xC0   End of packet;
-    constexpr char SLIP_ESC = '\\'; // = 0333;     //** 0xDB   Escape character
+    constexpr uint8_t SLIP_END = '#';  //= 0300;   //** 0xC0   End of packet;
+    constexpr uint8_t SLIP_ESC = '\\'; // = 0333;     //** 0xDB   Escape character
 
-    constexpr char SLIP_ESC_END[]{SLIP_ESC, 'N'};
-    constexpr char SLIP_ESC_ESC[]{SLIP_ESC, 'E'};
+    constexpr uint8_t SLIP_ESC_END[]{SLIP_ESC, 'X'};
+    constexpr uint8_t SLIP_ESC_ESC[]{SLIP_ESC, 'E'};
 
     typedef int error_t;
 
-    constexpr error_t NO_ERROR      = 0;    ///< no error
-    constexpr error_t ERROR_TIMEOUT = -1;   ///< stream timeout error
-    constexpr error_t ERROR_BUFFER  = -2;   ///< stream buffer error
-    constexpr error_t ERROR_STREAM  = -3;   ///< stream not ready error
-    constexpr error_t ERROR_ENCODING = -4;  ///< Protocol misread/miswrite error
-
+    constexpr error_t NO_ERROR       = 0;  ///< no error
+    constexpr error_t ERROR_TIMEOUT  = -1; ///< stream timeout error
+    constexpr error_t ERROR_BUFFER   = -2; ///< stream buffer error
+    constexpr error_t ERROR_STREAM   = -3; ///< stream not ready error
+    constexpr error_t ERROR_ENCODING = -4; ///< Protocol misread/miswrite error
 
     /**
-    * @brief Base class for SLIP + CRC protocol communications
-    *
-    * @tparam D Derived class used for CRTP implementation of static polymorphism
-    */
+     * @brief Base class for SLIP + CRC protocol communications
+     *
+     * @tparam D Derived class used for CRTP implementation of static polymorphism
+     */
     template <class D> // D is the derived type
     class SlipProtocolBase {
      public:
@@ -73,11 +73,11 @@ namespace sproto {
          * @param writeEnd  add the SLIP_ESC character to the end?
          * @return size_t   number of original un-escaped bytes written (NOT chars transmitted)
          */
-        size_t writeSlipEscaped(const char* src, size_t src_size, bool write_end = false) {
+        size_t writeSlipEscaped(const uint8_t* src, size_t src_size, bool write_end = false) {
             if (!isStreamReady())
                 return 0;
-            const char* end = src;
-            size_t ntx      = 0; // total src buffer characters processed (NOT chars transmitted)
+            const uint8_t* end = src;
+            size_t ntx         = 0; // total src buffer characters processed (NOT chars transmitted)
 
             while (src_size--) {
                 switch (end[0]) {
@@ -115,7 +115,12 @@ namespace sproto {
             return ntx;
         }
 
-        error_t readSlipEscaped(char* dest, size_t dest_size, size_t& nread, bool add_end = false) {
+        /** \copydoc SlipProtocolBase::writeSlipEscaped */
+        size_t writeSlipEscaped(const char* src, size_t src_size, bool write_end = false) {
+            return writeSlipEscaped(reinterpret_cast<const uint8_t*>(src), src_size, write_end);
+        }
+
+        error_t readSlipEscaped(uint8_t* dest, size_t dest_size, size_t& nread, bool add_end = false) {
             if (!isStreamReady())
                 return ERROR_STREAM;
             // leave room for SLIP_END at end of buffer
@@ -126,7 +131,7 @@ namespace sproto {
             if (nread == 0) {
                 return ERROR_TIMEOUT;
             }
-            char* src        = dest;
+            uint8_t* src     = dest;
             size_t remaining = nread;
             size_t nrx       = 0;
             bool misread     = false;
@@ -160,6 +165,11 @@ namespace sproto {
             return NO_ERROR;
         }
 
+        /** \copydoc SlipProtocolBase::readSlipEscaped */
+        error_t readSlipEscaped(char* dest, size_t dest_size, size_t& nread, bool add_end = false) {
+            return readSlipEscaped(reinterpret_cast<uint8_t*>(dest), dest_size, nread, add_end);
+        }
+
         /**
          * @brief Writes characters contained in buffer to stream.
          *
@@ -167,8 +177,8 @@ namespace sproto {
          * @param size size of buffer to write
          * @returns number of characters written to the stream
          */
-        size_t writeBytes(const char* buffer, size_t size) {
-            return static_cast<D*>(this)->writeBytes_(buffer, size);
+        size_t writeBytes(const uint8_t* buffer, size_t size) {
+            return static_cast<D*>(this)->writeBytes_impl(buffer, size);
         }
 
         /**
@@ -185,8 +195,8 @@ namespace sproto {
          *  - ERROR_BUFFER  read buffer too small
          *  - NO_ERROR      terminator found and read complete
          */
-        error_t readBytesUntil(char* buffer, size_t size, char terminator, size_t& nread) {
-            return static_cast<D*>(this)->readBytesUntil_(buffer, size, terminator, nread);
+        error_t readBytesUntil(uint8_t* buffer, size_t size, char terminator, size_t& nread) {
+            return static_cast<D*>(this)->readBytesUntil_impl(buffer, size, terminator, nread);
         }
 
         /**
@@ -196,7 +206,7 @@ namespace sproto {
          * @return false if no input detected
          */
         bool hasBytes() {
-            return static_cast<D*>(this)->hasBytes_();
+            return static_cast<D*>(this)->hasBytes_impl();
         }
 
         /**
@@ -206,14 +216,14 @@ namespace sproto {
          *
          */
         void writeNow() {
-            static_cast<D*>(this)->writeNow_();
+            static_cast<D*>(this)->writeNow_impl();
         }
 
         /**
          * @brief clear (flush) the contents of the receive buffer immediately.
          */
         void clearInput() {
-            static_cast<D*>(this)->clearInput_();
+            static_cast<D*>(this)->clearInput_impl();
         }
 
         /**
@@ -224,80 +234,16 @@ namespace sproto {
          * @return false    stream has not yet been started
          */
         bool isStreamReady() {
-            return static_cast<D*>(this)->isStreamReady_();
+            return static_cast<D*>(this)->isStreamReady_impl();
         }
 
         void crcKermitReset() {
-            return static_cast<D*>(this)->crcKermitReset_();
+            return static_cast<D*>(this)->crcKermitReset_impl();
         }
 
-        uint16_t crcKermitCalc(const char* src, size_t size) {
-            return static_cast<D*>(this)->crcKermitCalc_(src, size);
+        uint16_t crcKermitCalc(const uint8_t* src, size_t size) {
+            return static_cast<D*>(this)->crcKermitCalc_impl(src, size);
         }
-
-
-     protected:
-        /**
-         * \copydoc SlipProtocolBase::writeBytes
-         * Implemented by subclass.
-         */
-        size_t writeBytes_(const char* buffer, size_t size) {
-            assert(false);
-            return 0;
-        }
-
-        /**
-         * \copydoc SlipProtocolBase::readBytesUntil
-         * Implemented by subclass.
-         */
-        error_t readBytesUntil_(char* buffer, size_t size, char terminator, size_t& nread) {
-            assert(false);
-            return ERROR_TIMEOUT;
-        }
-
-        /**
-         * \copydoc SlipProtocolBase::hasBytes
-         * Implemented by subclass.
-         */
-        bool hasBytes_() {
-            assert(false);
-            return false;
-        }
-
-        /**
-         * \copydoc SlipProtocolBase::writeNow
-         * Implemented by subclass.
-         */
-        void writeNow_() {
-            assert(false);
-        }
-
-        /**
-         * \copydoc SlipProtocolBase::clearInput
-         * Implemented by subclass.
-         */
-        void clearInput_() {
-            assert(false);
-        }
-
-        /**
-         * \copydoc SlipProtocolBase::isStreamReady
-         * Implemented by subclass.
-         */
-        bool isStreamReady_() {
-            assert(false);
-            return false;
-        }
-
-        void crcKermitReset_() {
-            assert(false);
-        }
-
-        uint16_t crcKermitCalc_(const char* src, size_t size) {
-            assert(false);
-            return 0;
-        }
-
     };
 
 }; // namespace sproto
