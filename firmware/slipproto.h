@@ -5,40 +5,51 @@
     #include <cassert>
     #include <cctype>
 
-/*
+/**
+ * @page slipprot 
  * SLIP encoded serial protocol
  *
  * Standard command/request format:
+ * @code
  *	Single letter code: ! for set, ? for query
  *	SLIP-escaped frame containing
  *		CBOR-encoded command or request
  *		CBOR-encoded parameters
  *		16-bit CRC CCITT/KERMIT format of non-escaped frame
  *	SLIP_END
+ * @endcode
  *
  * Simple command ACK/NAK
+ * @code
  *	Single letter: + for ACK, - for NAK
  *	SLIP_END
+ * @endcode
  *
  * Standard query ACK
+ * @code
  *	Single letter: + for ACK
  *	SLIP-escaped frame containing
  *		CBOR-encoded command echo
  *		CBOR-encoded parameters
  *		16-bit CRC CCITT/KERMIT format of non-escaped frame
  *	SLIP_END
+ * @endcode
  *
  * Simple query NAK
+ * @code
  *	Single letter: - for NAK
  *	SLIP_END (controller might resend request)
+ * @endcode
  *
  * Special command/request codes
+ * @code
  *	Single letter code: q for query
  *	SLIP-escaped frame containing
  *		CBOR-encoded device version
  *		CBOR-encoded device description
  *		16-bit CRC CCITT/KERMIT format of non-escaped frame
  *	SLIP_END
+ * @endcode
  *
  */
 
@@ -66,11 +77,11 @@ namespace sproto {
     class SlipProtocolBase {
      public:
         /**
-         * @brief Write SLIP escaped buffer
+         * @brief Write SLIP escaped buffer.
          *
          * @param src       buffer to write
          * @param src_size  size of buffer to write
-         * @param writeEnd  add the SLIP_ESC character to the end?
+         * @param write_end  add the SLIP_ESC character to the end?
          * @return size_t   number of original un-escaped bytes written (NOT chars transmitted)
          */
         size_t writeSlipEscaped(const uint8_t* src, size_t src_size, bool write_end = false) {
@@ -115,11 +126,28 @@ namespace sproto {
             return ntx;
         }
 
-        /** \copydoc SlipProtocolBase::writeSlipEscaped */
+        /**
+         * @brief UTF8 character version
+         */
         size_t writeSlipEscaped(const char* src, size_t src_size, bool write_end = false) {
             return writeSlipEscaped(reinterpret_cast<const uint8_t*>(src), src_size, write_end);
         }
 
+        /**
+         * @brief Read SLIP escaped sequence from stream into buffer and remove escapes. 
+         * 
+         * Looks for standard SLIP END character.
+         * 
+         * @param dest      destination buffer to fill
+         * @param dest_size size of destination buffer (should be large enough to read escaped stream)
+         * @param nread     number of bytes read after encoding
+         * @param add_end   add the SLIP_END character to the end of the destination buffer
+         * @return
+         *  - ERROR_TIMEOUT timeout occurred before terminating character was found
+         *  - ERROR_BUFFER  read buffer too small
+         *  - ERROR_ENCODING slip stream was improperly encoded
+         *  - NO_ERROR      terminator found and read complete
+         */
         error_t readSlipEscaped(uint8_t* dest, size_t dest_size, size_t& nread, bool add_end = false) {
             if (!isStreamReady())
                 return ERROR_STREAM;
@@ -165,7 +193,7 @@ namespace sproto {
             return NO_ERROR;
         }
 
-        /** \copydoc SlipProtocolBase::readSlipEscaped */
+        /** @brief UTF8 character version */
         error_t readSlipEscaped(char* dest, size_t dest_size, size_t& nread, bool add_end = false) {
             return readSlipEscaped(reinterpret_cast<uint8_t*>(dest), dest_size, nread, add_end);
         }
@@ -237,10 +265,22 @@ namespace sproto {
             return static_cast<D*>(this)->isStreamReady_impl();
         }
 
+        /**
+         * @brief reset the KERMIT CRC16 seed
+         */
         void crcKermitReset() {
             return static_cast<D*>(this)->crcKermitReset_impl();
         }
 
+        /**
+         * @brief Calculate the KERMIT CRC16 value of a buffer. 
+         * Use @ref crcKermitReset() before sending more data.
+         * Must calculate CRC-CCITT (True CCITT) value, compatible with the kermit protocol.
+         * 
+         * @param src buffer to calculate
+         * @param size number of bytes in buffer
+         * @return calculated CRC16 value
+         */
         uint16_t crcKermitCalc(const uint8_t* src, size_t size) {
             return static_cast<D*>(this)->crcKermitCalc_impl(src, size);
         }

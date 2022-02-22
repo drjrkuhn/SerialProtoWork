@@ -21,31 +21,49 @@ namespace sproto {
         friend BASE;
 
      public:
-        ArduinoSlipProtocol(S& stream) : stream_(stream), timeout_(999) {
+        /**
+         * @brief Construct a new Arduino Slip Protocol object.
+         * 
+         * **Implementation notes**: Arduino Stream::readBytesUntil discards the terminator
+         * character. So there is no simple way to tell if the terminator character
+         * was actually received by reading the buffer. But readBytesUntil will also return
+         * after a timeout. We keep track of a slightly shorter timeout than the natural
+         * Arduino Stream read timeout. If the readBytesUntil took longer than this, we
+         * assume the Stream::read encountered a timeout and that no terminator character was 
+         * found. We use that to return an error condition.
+         * 
+         * @param stream Usually Serial, Serial1, Serial2, etc
+         * @param timeout readBytesUntil timeout.
+         */
+        ArduinoSlipProtocol(S& stream, unsigned long timeout=990) : stream_(stream), timeout_(timeout) {
         }
+
+        /** Start the output stream */
         void begin() {
             stream_.begin(115200);
             while (!stream_) {
                 ; // wait for serial port to connect. Needed for native USB port only
             }
+            stream_.setTimeout(timeout_+10);
         }
 
+        /** Stop the output stream */
         void end() {
             stream_.end();
         }
 
      protected:
         /**
-         * \copydoc SlipProtocolBase::writeBytes
-         * CRTP implementation.
+         * @copydoc SlipProtocolBase::writeBytes
+         * @details CRTP implementation.
          */
         size_t writeBytes_impl(const uint8_t* buffer, size_t size) {
             return stream_.write(reinterpret_cast<const char*>(buffer), size);
         }
 
         /**
-         * \copydoc SlipProtocolBase::readBytesUntil
-         * CRTP implementation.
+         * @copydoc SlipProtocolBase::readBytesUntil
+         * @details CRTP implementation.
          */
         error_t readBytesUntil_impl(uint8_t* buffer, const size_t size, const char terminator, size_t& nread) {
             const unsigned long startMillis = millis();
@@ -60,16 +78,16 @@ namespace sproto {
         }
 
         /**
-         * \copydoc SlipProtocolBase::hasBytes
-         * CRTP implementation.
+         * @copydoc SlipProtocolBase::hasBytes
+         * @details CRTP implementation.
          */
         bool hasBytes_impl() {
             return stream_.available();
         }
 
         /**
-         * \copydoc SlipProtocolBase::writeNow
-         * CRTP implementation.
+         * @copydoc SlipProtocolBase::writeNow
+         * @details CRTP implementation.
          */
         void writeNow_impl() {
             stream_.flush();
@@ -77,31 +95,32 @@ namespace sproto {
         }
 
         /**
-         * \copydoc SlipProtocolBase::clearInput
+         * @copydoc SlipProtocolBase::clearInput
+         * @details implementation.
          */
         void clearInput_impl() {
             Serial.clear();
         }
 
         /**
-         * \copydoc SlipProtocolBase::isStreamReady
-         * CRTP implementation
+         * @copydoc SlipProtocolBase::isStreamReady
+         * @details implementation
          */
         bool isStreamReady_impl() {
             return stream_;
         }
 
         /**
-         * \copydoc SlipProtocolBase::crcKermitReset
-         * CRTP implementation
+         * @copydoc SlipProtocolBase::crcKermitReset
+         * @details CRTP implementation
          */
         void crcKermitReset_impl() {
             crc_.kermit(NULL, 0);
         }
 
         /**
-         * \copydoc SlipProtocolBase::crcKermitCalc
-         * CRTP implementation
+         * @copydoc SlipProtocolBase::crcKermitCalc
+         * @details CRTP implementation
          */
         uint16_t crcKermitCalc_impl(const uint8_t* src, size_t size) {
             return crc_.kermit_upd(src, size);

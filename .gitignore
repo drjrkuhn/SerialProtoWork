@@ -10,6 +10,7 @@
 **/build/
 **/x64/
 **/.vs/
+**/html/
 
 **/*.vcxproj.filters
 **/*.vcxproj.user
