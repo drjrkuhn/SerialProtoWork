@@ -22,7 +22,7 @@ LIBS_SHARED_BASE := C:\Users\jrkuhn\Documents\Arduino\libraries
 LIBS_SHARED      :=  
 
 LIBS_LOCAL_BASE  := lib
-LIBS_LOCAL       := FastCRC 
+LIBS_LOCAL       := FastCRC tinycbor
 
 CORE_BASE        := C:\PROGRA~2\Arduino\hardware\teensy\avr\cores\teensy4
 GCC_BASE         := C:\PROGRA~2\Arduino\hardware\tools\arm\bin

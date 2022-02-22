@@ -4,10 +4,14 @@
     #define __SLIPPROTO_H__
     #include <cassert>
     #include <cctype>
+    #include <cbor.h>
 
 /**
  * @page slipprot 
  * SLIP encoded serial protocol
+ * ============================
+ * 
+ * Note 16-bit CRC is encoded in network byte order (big endian)
  *
  * Standard command/request format:
  * @code
@@ -18,12 +22,18 @@
  *		16-bit CRC CCITT/KERMIT format of non-escaped frame
  *	SLIP_END
  * @endcode
+ * |>cmd|command|crc-16|end|
+ * |----|-------|---|---|
+ * |! / ?|CBOR-encoded packet|HI LO|END|
  *
  * Simple command ACK/NAK
  * @code
  *	Single letter: + for ACK, - for NAK
  *	SLIP_END
  * @endcode
+ * |<ACK/NAK|end|
+ * |----|---|
+ * |+/-|END|
  *
  * Standard query ACK
  * @code
@@ -34,16 +44,25 @@
  *		16-bit CRC CCITT/KERMIT format of non-escaped frame
  *	SLIP_END
  * @endcode
+ * |<ACK|response|crc-16|end|
+ * |----|-------|---|---|
+ * |  + |CBOR-encoded packet|HI LO|END|
  *
  * Simple query NAK
  * @code
  *	Single letter: - for NAK
  *	SLIP_END (controller might resend request)
  * @endcode
+ * |<NAK|end|
+ * |----|---|
+ * | - |END|
  *
  * Special command/request codes
  * @code
+ * SEND
  *	Single letter code: q for query
+ * RESPONSE
+ *	Single letter: + for ACK
  *	SLIP-escaped frame containing
  *		CBOR-encoded device version
  *		CBOR-encoded device description
@@ -54,11 +73,20 @@
  */
 
 namespace sproto {
+    // for now, we are using human-readable escape and end characters rather than the SLIP default
+    // for debugging
     constexpr uint8_t SLIP_END = '#';  //= 0300;   //** 0xC0   End of packet;
     constexpr uint8_t SLIP_ESC = '\\'; // = 0333;     //** 0xDB   Escape character
 
     constexpr uint8_t SLIP_ESC_END[]{SLIP_ESC, 'X'};
     constexpr uint8_t SLIP_ESC_ESC[]{SLIP_ESC, 'E'};
+
+    constexpr uint8_t PROTO_SET = '!';
+    constexpr uint8_t PROTO_GET = '?';
+    constexpr uint8_t PROTO_ACK = '+';
+    constexpr uint8_t PROTO_NAK = '-';
+    constexpr uint8_t PROTO_QUERY = 'q';
+    constexpr uint8_t PROTO_RESET = 'r';
 
     typedef int error_t;
 
@@ -68,6 +96,8 @@ namespace sproto {
     constexpr error_t ERROR_STREAM   = -3; ///< stream not ready error
     constexpr error_t ERROR_ENCODING = -4; ///< Protocol misread/miswrite error
 
+
+
     /**
      * @brief Base class for SLIP + CRC protocol communications
      *
@@ -76,6 +106,8 @@ namespace sproto {
     template <class D> // D is the derived type
     class SlipProtocolBase {
      public:
+        SlipProtocolBase(bool use_crc) : use_crc_(use_crc) {}
+
         /**
          * @brief Write SLIP escaped buffer.
          *
@@ -284,6 +316,8 @@ namespace sproto {
         uint16_t crcKermitCalc(const uint8_t* src, size_t size) {
             return static_cast<D*>(this)->crcKermitCalc_impl(src, size);
         }
+
+        bool use_crc_;
     };
 
 }; // namespace sproto

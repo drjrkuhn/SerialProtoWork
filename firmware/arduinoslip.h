@@ -35,7 +35,7 @@ namespace sproto {
          * @param stream Usually Serial, Serial1, Serial2, etc
          * @param timeout readBytesUntil timeout.
          */
-        ArduinoSlipProtocol(S& stream, unsigned long timeout=990) : stream_(stream), timeout_(timeout) {
+        ArduinoSlipProtocol(S& stream, bool use_crc=true, unsigned long timeout=990) : BASE(use_crc), stream_(stream), timeout_(timeout) {
         }
 
         /** Start the output stream */
