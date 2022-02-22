@@ -19,7 +19,8 @@
         "F_CPU=600000000",
         "USB_SERIAL",
         "LAYOUT_US_ENGLISH",
-        "ARDUINO=10813"
+        "ARDUINO=10813",
+        "KINETISK=__IMXRT1062__"
       ],
       "compilerPath": "C:/PROGRA~2/Arduino/hardware/tools/arm/bin/arm-none-eabi-gcc.exe",
       "intelliSenseMode": "gcc-arm",

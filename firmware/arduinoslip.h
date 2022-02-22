@@ -5,9 +5,34 @@
 
     #include "slipproto.h"
     #include <Arduino.h>
+    #include <FastCRC.h>
     #include <Stream.h>
 
 namespace sproto {
+
+    // template <class D>
+    // class CRCKermit {
+    // public:
+    //     void reset() {
+    //         static_cast<D*>(this)->reset_();
+    //     }
+    //     uint16_t calc(uint8_t* buf, size_t size) {
+    //         return static_cast<D*>(this)->calc(buf, size);
+    //     }
+    // };
+
+    // class ArduinoCRCKermit : CRCKermit<ArduinoCRCKermit> {
+    //     public:
+    //     ArduinoCRCKermit() {}
+    //     void reset_() {
+    //         crc16_.kermit(NULL,0);
+    //     }
+    //     uint16_t calc_(const uint8_t* buf, size_t size) {
+    //         return crc16_.kermit_upd(buf, size);
+    //     }
+
+    //     FastCRC16 crc16_;
+    // };
 
     template <typename S>
     class ArduinoSlipProtocol : public SlipProtocolBase<ArduinoSlipProtocol<S>> {
@@ -65,10 +90,18 @@ namespace sproto {
         bool isStreamReady_() {
             return stream_;
         }
+        
+        void crcKermitReset_() {
+            crc_.kermit(NULL, 0);
+        }
 
+        uint16_t crcKermitCalc_(const char* src, size_t size) {
+            return crc_.kermit_upd(reinterpret_cast<const uint8_t*>(src), size);
+        }
 
         S& stream_;             ///< Aruino stream to write to
         unsigned long timeout_; ///< Terminated read timeout in msec
+        FastCRC16 crc_;
     };
 
 }; // namespace
