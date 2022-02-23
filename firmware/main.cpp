@@ -24,10 +24,16 @@ void loop() {
         String out1 = "Lorus Ipsum";
         String out2 = "Favius## Rex\\ \\\\#\\##Aeturnum padre##";
         Serial.print("   >>");
-        SlipSerial.writeSlipEscaped(out1.c_str(), out1.length(), true);
+        SlipSerial.crcKermitReset();
+        uint16_t crc = SlipSerial.crcKermitCalc(out1.c_str(), out1.length());
+        SlipSerial.writeSlipEscaped(out1.c_str(), out1.length());
+        SlipSerial.writeSlipEnd(crc);
         Serial.println();
         Serial.print("   >>");
-        SlipSerial.writeSlipEscaped(out2.c_str(), out2.length(), true);
+        SlipSerial.crcKermitReset();
+        crc = SlipSerial.crcKermitCalc(out2.c_str(), out2.length());
+        SlipSerial.writeSlipEscaped(out2.c_str(), out2.length());
+        SlipSerial.writeSlipEnd(crc);
         Serial.println();
     }
     // Serial.println("Waiting for input");

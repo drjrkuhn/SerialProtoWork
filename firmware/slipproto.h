@@ -5,6 +5,7 @@
     #include <cassert>
     #include <cbor.h>
     #include <cctype>
+    #include <compilersupport_p.h> // cbor_htons etc
 
 /**
  * @page slipprot
@@ -161,6 +162,16 @@ namespace sproto {
             return writeSlipEscaped(reinterpret_cast<const uint8_t*>(src), src_size);
         }
 
+        size_t writeSlipEnd() {
+            return writeBytes(&SLIP_END,1);
+        }
+
+        size_t writeSlipEnd(uint16_t crc) {
+            crc = cbor_htons(crc);
+            size_t n = writeSlipEscaped(reinterpret_cast<const uint8_t*>(&crc), sizeof(uint16_t));
+            return n + writeSlipEnd();
+        }
+
         /**
          * @brief Read SLIP escaped sequence from stream into buffer and remove escapes.
          *
@@ -306,6 +317,10 @@ namespace sproto {
          */
         uint16_t crcKermitCalc(const uint8_t* src, size_t size) {
             return static_cast<D*>(this)->crcKermitCalc_impl(src, size);
+        }
+
+        uint16_t crcKermitCalc(const char* src, size_t size) {
+            return crcKermitCalc(reinterpret_cast<const uint8_t*>(src), size);
         }
 
         bool use_crc_;
