@@ -6,7 +6,7 @@
         "kind": "build",
         "isDefault": true
       },
-      "command": "C:/Apps/VisualTeensy_v1.4.0/make.exe",
+      "command": "${env:TEENSY_MAKE}",
       "args": [
         "all",
         "-j",
@@ -19,7 +19,7 @@
         "kind": "build",
         "isDefault": true
       },
-      "command": "C:/Apps/VisualTeensy_v1.4.0/make.exe",
+      "command": "${env:TEENSY_MAKE}",
       "args": [
         "clean"
       ]
@@ -30,7 +30,7 @@
         "kind": "build",
         "isDefault": true
       },
-      "command": "C:/Apps/VisualTeensy_v1.4.0/make.exe",
+      "command": "${env:TEENSY_MAKE}",
       "args": [
         "upload",
         "-j",
@@ -43,7 +43,7 @@
         "kind": "build",
         "isDefault": true
       },
-      "command": "C:/Apps/VisualTeensy_v1.4.0/make.exe",
+      "command": "${env:TEENSY_MAKE}",
       "args": [
         "uploadTy",
         "-j",

@@ -20,3 +20,5 @@ System environment variables used
 - `TY_TOOLS` folder [make]
 - `ARDUINO_LIBS` folder [make]
     - Windows: `C:\Users\jrkuhn\DOCUME~1\Arduino\LIBRAR~1`
+- `TEENSY_MAKE` executable [make]
+    - Windows: `C:\Apps\VisualTeensy_v1.4.0\make.exe`
