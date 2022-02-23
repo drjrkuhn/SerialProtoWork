@@ -23,19 +23,20 @@ namespace sproto {
      public:
         /**
          * @brief Construct a new Arduino Slip Protocol object.
-         * 
+         *
          * **Implementation notes**: Arduino Stream::readBytesUntil discards the terminator
          * character. So there is no simple way to tell if the terminator character
          * was actually received by reading the buffer. But readBytesUntil will also return
          * after a timeout. We keep track of a slightly shorter timeout than the natural
          * Arduino Stream read timeout. If the readBytesUntil took longer than this, we
-         * assume the Stream::read encountered a timeout and that no terminator character was 
+         * assume the Stream::read encountered a timeout and that no terminator character was
          * found. We use that to return an error condition.
-         * 
+         *
          * @param stream Usually Serial, Serial1, Serial2, etc
          * @param timeout readBytesUntil timeout.
          */
-        ArduinoSlipProtocol(S& stream, bool use_crc=true, unsigned long timeout=990) : BASE(use_crc), stream_(stream), timeout_(timeout) {
+        ArduinoSlipProtocol(S& stream, bool use_crc = true, unsigned long timeout = 990)
+            : BASE(use_crc), stream_(stream), timeout_(timeout) {
         }
 
         /** Start the output stream */
@@ -44,7 +45,7 @@ namespace sproto {
             while (!stream_) {
                 ; // wait for serial port to connect. Needed for native USB port only
             }
-            stream_.setTimeout(timeout_+10);
+            stream_.setTimeout(timeout_ + 10);
         }
 
         /** Stop the output stream */

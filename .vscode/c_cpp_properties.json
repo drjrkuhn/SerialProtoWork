@@ -20,7 +20,7 @@
         "ARDUINO=10813",
         "KINETISK=__IMXRT1062__"
       ],
-      "compilerPath": "C:/PROGRA~2/Arduino/hardware/tools/arm/bin/arm-none-eabi-gcc.exe",
+      "compilerPath": "${env:ARDUINO_HARDWARE}/tools/arm/bin/arm-none-eabi-gcc.exe",
       "intelliSenseMode": "gcc-arm",
       "cppStandard": "gnu++14"
     }

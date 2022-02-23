@@ -3,14 +3,14 @@
 #ifndef __SLIPPROTO_H__
     #define __SLIPPROTO_H__
     #include <cassert>
-    #include <cctype>
     #include <cbor.h>
+    #include <cctype>
 
 /**
- * @page slipprot 
+ * @page slipprot
  * SLIP encoded serial protocol
  * ============================
- * 
+ *
  * Note 16-bit CRC is encoded in network byte order (big endian)
  *
  * Standard command/request format:
@@ -81,10 +81,10 @@ namespace sproto {
     constexpr uint8_t SLIP_ESC_END[]{SLIP_ESC, 'X'};
     constexpr uint8_t SLIP_ESC_ESC[]{SLIP_ESC, 'E'};
 
-    constexpr uint8_t PROTO_SET = '!';
-    constexpr uint8_t PROTO_GET = '?';
-    constexpr uint8_t PROTO_ACK = '+';
-    constexpr uint8_t PROTO_NAK = '-';
+    constexpr uint8_t PROTO_SET   = '!';
+    constexpr uint8_t PROTO_GET   = '?';
+    constexpr uint8_t PROTO_ACK   = '+';
+    constexpr uint8_t PROTO_NAK   = '-';
     constexpr uint8_t PROTO_QUERY = 'q';
     constexpr uint8_t PROTO_RESET = 'r';
 
@@ -96,8 +96,6 @@ namespace sproto {
     constexpr error_t ERROR_STREAM   = -3; ///< stream not ready error
     constexpr error_t ERROR_ENCODING = -4; ///< Protocol misread/miswrite error
 
-
-
     /**
      * @brief Base class for SLIP + CRC protocol communications
      *
@@ -106,17 +104,18 @@ namespace sproto {
     template <class D> // D is the derived type
     class SlipProtocolBase {
      public:
-        SlipProtocolBase(bool use_crc) : use_crc_(use_crc) {}
+        SlipProtocolBase(bool use_crc)
+            : use_crc_(use_crc) {
+        }
 
         /**
          * @brief Write SLIP escaped buffer.
          *
          * @param src       buffer to write
          * @param src_size  size of buffer to write
-         * @param write_end  add the SLIP_ESC character to the end?
          * @return size_t   number of original un-escaped bytes written (NOT chars transmitted)
          */
-        size_t writeSlipEscaped(const uint8_t* src, size_t src_size, bool write_end = false) {
+        size_t writeSlipEscaped(const uint8_t* src, size_t src_size) {
             if (!isStreamReady())
                 return 0;
             const uint8_t* end = src;
@@ -152,35 +151,31 @@ namespace sproto {
             if (0 < end - src) {
                 ntx += writeBytes(src, end - src);
             }
-            if (write_end) {
-                ntx += writeBytes(&SLIP_END, 1);
-            }
             return ntx;
         }
 
         /**
          * @brief UTF8 character version
          */
-        size_t writeSlipEscaped(const char* src, size_t src_size, bool write_end = false) {
-            return writeSlipEscaped(reinterpret_cast<const uint8_t*>(src), src_size, write_end);
+        size_t writeSlipEscaped(const char* src, size_t src_size) {
+            return writeSlipEscaped(reinterpret_cast<const uint8_t*>(src), src_size);
         }
 
         /**
-         * @brief Read SLIP escaped sequence from stream into buffer and remove escapes. 
-         * 
+         * @brief Read SLIP escaped sequence from stream into buffer and remove escapes.
+         *
          * Looks for standard SLIP END character.
-         * 
+         *
          * @param dest      destination buffer to fill
          * @param dest_size size of destination buffer (should be large enough to read escaped stream)
          * @param nread     number of bytes read after encoding
-         * @param add_end   add the SLIP_END character to the end of the destination buffer
          * @return
          *  - ERROR_TIMEOUT timeout occurred before terminating character was found
          *  - ERROR_BUFFER  read buffer too small
          *  - ERROR_ENCODING slip stream was improperly encoded
          *  - NO_ERROR      terminator found and read complete
          */
-        error_t readSlipEscaped(uint8_t* dest, size_t dest_size, size_t& nread, bool add_end = false) {
+        error_t readSlipEscaped(uint8_t* dest, size_t dest_size, size_t& nread) {
             if (!isStreamReady())
                 return ERROR_STREAM;
             // leave room for SLIP_END at end of buffer
@@ -218,16 +213,12 @@ namespace sproto {
             if (nrx == 0 || misread) {
                 return ERROR_ENCODING;
             }
-            if (add_end) {
-                dest[0] = SLIP_END;
-                nread++;
-            }
             return NO_ERROR;
         }
 
         /** @brief UTF8 character version */
-        error_t readSlipEscaped(char* dest, size_t dest_size, size_t& nread, bool add_end = false) {
-            return readSlipEscaped(reinterpret_cast<uint8_t*>(dest), dest_size, nread, add_end);
+        error_t readSlipEscaped(char* dest, size_t dest_size, size_t& nread) {
+            return readSlipEscaped(reinterpret_cast<uint8_t*>(dest), dest_size, nread);
         }
 
         /**
@@ -305,10 +296,10 @@ namespace sproto {
         }
 
         /**
-         * @brief Calculate the KERMIT CRC16 value of a buffer. 
+         * @brief Calculate the KERMIT CRC16 value of a buffer.
          * Use @ref crcKermitReset() before sending more data.
          * Must calculate CRC-CCITT (True CCITT) value, compatible with the kermit protocol.
-         * 
+         *
          * @param src buffer to calculate
          * @param size number of bytes in buffer
          * @return calculated CRC16 value
