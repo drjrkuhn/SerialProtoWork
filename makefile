@@ -9,7 +9,19 @@
 #
 # https://github.com/luni64/VisualTeensy
 #******************************************************************************
-SHELL            := cmd.exe
+ifeq ($(OS),Windows_NT)
+	SHELL            := cmd.exe
+else
+	UNAME_S := $(shell uname -s)
+	ifeq ($(UNAME_S),Linux)
+		SHELL        := bash
+	endif
+	ifeq ($(UNAME_S),Darwin)
+		SHELL        := zsh
+	endif
+endif
+
+# SHELL            := cmd.exe
 export SHELL
 
 TARGET_NAME      := SerialProtoWork
@@ -24,9 +36,9 @@ LIBS_SHARED      :=
 LIBS_LOCAL_BASE  := lib
 LIBS_LOCAL       := FastCRC tinycbor
 
-CORE_BASE        := $(ARDUINO_HARDWARE)\teensy\avr\cores\teensy4
-GCC_BASE         := $(ARDUINO_HARDWARE)\tools\arm\bin
-UPL_PJRC_B       := $(ARDUINO_HARDWARE)\tools
+CORE_BASE        := $(ARDUINO_HARDWARE)/teensy/avr/cores/teensy4
+GCC_BASE         := $(ARDUINO_HARDWARE)/tools/arm/bin
+UPL_PJRC_B       := $(ARDUINO_HARDWARE)/tools
 UPL_TYCMD_B      := $(TY_TOOLS)
 
 #******************************************************************************
