@@ -4,9 +4,7 @@
       "name": "VisualTeensy",
       "includePath": [
         "firmware",
-        "C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4",
-        "C:/Users/jrkuhn/Documents/Arduino/libraries/MsgPacketizer",
-        "C:/Users/jrkuhn/Documents/Arduino/libraries/PacketSerial/src",
+        "${env:ARDUINO_HARDWARE}/teensy/avr/cores/teensy4",
         "lib/FastCRC",
         "lib/tinycbor/src"
       ],

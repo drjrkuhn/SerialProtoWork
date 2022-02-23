@@ -18,16 +18,16 @@ BOARD_ID         := TEENSY40
 
 MCU              := imxrt1062
 
-LIBS_SHARED_BASE := C:\Users\jrkuhn\Documents\Arduino\libraries
+LIBS_SHARED_BASE := $(ARDUINO_LIBS)
 LIBS_SHARED      :=  
 
 LIBS_LOCAL_BASE  := lib
 LIBS_LOCAL       := FastCRC tinycbor
 
-CORE_BASE        := C:\PROGRA~2\Arduino\hardware\teensy\avr\cores\teensy4
-GCC_BASE         := C:\PROGRA~2\Arduino\hardware\tools\arm\bin
-UPL_PJRC_B       := C:\PROGRA~2\Arduino\hardware\tools
-UPL_TYCMD_B      := C:\Apps\TyTools
+CORE_BASE        := $(ARDUINO_HARDWARE)\teensy\avr\cores\teensy4
+GCC_BASE         := $(ARDUINO_HARDWARE)\tools\arm\bin
+UPL_PJRC_B       := $(ARDUINO_HARDWARE)\tools
+UPL_TYCMD_B      := $(TY_TOOLS)
 
 #******************************************************************************
 # Flags and Defines
