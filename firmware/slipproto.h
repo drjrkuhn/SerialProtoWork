@@ -11,7 +11,7 @@
  * @page slipprot
  * SLIP encoded serial protocol
  * ============================
- * 
+ *
  * Note 16-bit CRC is encoded in network byte order (big endian)
  *
  * Standard command/request format:
@@ -98,12 +98,63 @@ namespace sproto {
     constexpr error_t ERROR_ENCODING = -4; ///< Protocol misread/miswrite error
 
     /**
+     * @brief Holds a structured protocol packet and maintains SLIP+CRC encoding
+     * 
+     * Encoding
+     * -----------------------
+     * 
+     * | packet   | CRC-16    | END    |
+     * |---------:|-----------|--------|
+     * |...SLIP encoded...   [tail]| 2-4 bytes | 1 byte |
+     * 
+     * During creation, the buffer always maintains slip encoding with an escaped 16-bit CRC and SLIP_END.
+     * The CCITT (kermit) 16bit CRC is stored in network (big endian) byte order. The two CRC bytes are
+     * also SLIP encoded in case they contain the END or ESC characters. With the SLIP_END character,
+     * the terminator can be 3, 4, or 5 bytes long.
+     * 
+     * The tail_ pointer points to the beginning of the CRC. New data will be slip encoded and amended
+     * to the tail_. Followed by the running CRC and END terminator.
+     * 
+     * 
+     */
+
+    template <typename D>
+    struct CRTP
+    {
+        D& derived() { return static_cast<D&>(*this); }
+        D const& derived() const { return static_cast<D const&>(*this); }
+    };
+
+    // class ProtoPacket {
+    //  public:
+    //     ProtoPacket(uint8_t* buffer, size_t size)
+    //         : ProtoPacket(buffer, buffer + size) {}
+
+    //     ProtoPacket(uint8_t* begin, uint8_t* end)
+    //         : head_(begin), tail_(begin), end_(end), current_crc_(0) {}
+
+    //     size_t Encode(uint8_t* buffer, size_t size) {
+    //         Encode(buffer, buffer+size);
+    //     }
+    //     size_t Encode(uint8_t* begin, uint8_t* end) {
+
+    //     }
+
+    //  protected:
+    //     uint8_t* head_; ///< absolute start of buffer
+    //     uint8_t* tail_; ///< start of next free space, points to CRC in network order
+    //     uint8_t* end_; ///< absolute end of buffer
+    //     uint16_t current_crc_;
+    //     CRC crc_;
+    // };
+
+    /**
      * @brief Base class for SLIP + CRC protocol communications
      *
      * @tparam D Derived class used for CRTP implementation of static polymorphism
      */
     template <class D> // D is the derived type
-    class SlipProtocolBase {
+    class SlipProtocolBase : CRTP<D> {
      public:
         SlipProtocolBase(bool use_crc)
             : use_crc_(use_crc) {
@@ -163,11 +214,11 @@ namespace sproto {
         }
 
         size_t writeSlipEnd() {
-            return writeBytes(&SLIP_END,1);
+            return writeBytes(&SLIP_END, 1);
         }
 
         size_t writeSlipEnd(uint16_t crc) {
-            crc = cbor_htons(crc);
+            crc      = cbor_htons(crc);
             size_t n = writeSlipEscaped(reinterpret_cast<const uint8_t*>(&crc), sizeof(uint16_t));
             return n + writeSlipEnd();
         }
@@ -240,7 +291,8 @@ namespace sproto {
          * @returns number of characters written to the stream
          */
         size_t writeBytes(const uint8_t* buffer, size_t size) {
-            return static_cast<D*>(this)->writeBytes_impl(buffer, size);
+            // return static_cast<D*>(this)->writeBytes_impl(buffer, size);
+            derived().writeBytes_impl(buffer, size);
         }
 
         /**
