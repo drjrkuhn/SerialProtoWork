@@ -11,7 +11,7 @@
  * @page slipprot
  * SLIP encoded serial protocol
  * ============================
- *
+ * 
  * Note 16-bit CRC is encoded in network byte order (big endian)
  *
  * Standard command/request format:
