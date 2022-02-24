@@ -99,31 +99,24 @@ namespace sproto {
 
     /**
      * @brief Holds a structured protocol packet and maintains SLIP+CRC encoding
-     * 
+     *
      * Encoding
      * -----------------------
-     * 
+     *
      * | packet   | CRC-16    | END    |
      * |---------:|-----------|--------|
      * |...SLIP encoded...   [tail]| 2-4 bytes | 1 byte |
-     * 
+     *
      * During creation, the buffer always maintains slip encoding with an escaped 16-bit CRC and SLIP_END.
      * The CCITT (kermit) 16bit CRC is stored in network (big endian) byte order. The two CRC bytes are
      * also SLIP encoded in case they contain the END or ESC characters. With the SLIP_END character,
      * the terminator can be 3, 4, or 5 bytes long.
-     * 
+     *
      * The tail_ pointer points to the beginning of the CRC. New data will be slip encoded and amended
      * to the tail_. Followed by the running CRC and END terminator.
-     * 
-     * 
+     *
+     *
      */
-
-    template <typename D>
-    struct CRTP
-    {
-        D& derived() { return static_cast<D&>(*this); }
-        D const& derived() const { return static_cast<D const&>(*this); }
-    };
 
     // class ProtoPacket {
     //  public:
@@ -154,7 +147,10 @@ namespace sproto {
      * @tparam D Derived class used for CRTP implementation of static polymorphism
      */
     template <class D> // D is the derived type
-    class SlipProtocolBase : CRTP<D> {
+    class SlipProtocolBase {
+        D& derived() { return *static_cast<D*>(this); }
+        D const& derived() const { return *static_cast<D const*>(this); }
+
      public:
         SlipProtocolBase(bool use_crc)
             : use_crc_(use_crc) {
@@ -292,7 +288,7 @@ namespace sproto {
          */
         size_t writeBytes(const uint8_t* buffer, size_t size) {
             // return static_cast<D*>(this)->writeBytes_impl(buffer, size);
-            derived().writeBytes_impl(buffer, size);
+            return derived().writeBytes_impl(buffer, size);
         }
 
         /**
@@ -310,7 +306,7 @@ namespace sproto {
          *  - NO_ERROR      terminator found and read complete
          */
         error_t readBytesUntil(uint8_t* buffer, size_t size, char terminator, size_t& nread) {
-            return static_cast<D*>(this)->readBytesUntil_impl(buffer, size, terminator, nread);
+            return derived().readBytesUntil_impl(buffer, size, terminator, nread);
         }
 
         /**
@@ -320,7 +316,7 @@ namespace sproto {
          * @return false if no input detected
          */
         bool hasBytes() {
-            return static_cast<D*>(this)->hasBytes_impl();
+            return derived().hasBytes_impl();
         }
 
         /**
@@ -330,14 +326,14 @@ namespace sproto {
          *
          */
         void writeNow() {
-            static_cast<D*>(this)->writeNow_impl();
+            derived().writeNow_impl();
         }
 
         /**
          * @brief clear (flush) the contents of the receive buffer immediately.
          */
         void clearInput() {
-            static_cast<D*>(this)->clearInput_impl();
+            derived().clearInput_impl();
         }
 
         /**
@@ -348,14 +344,14 @@ namespace sproto {
          * @return false    stream has not yet been started
          */
         bool isStreamReady() {
-            return static_cast<D*>(this)->isStreamReady_impl();
+            return derived().isStreamReady_impl();
         }
 
         /**
          * @brief reset the KERMIT CRC16 seed
          */
         void crcKermitReset() {
-            return static_cast<D*>(this)->crcKermitReset_impl();
+            return derived().crcKermitReset_impl();
         }
 
         /**
@@ -368,7 +364,7 @@ namespace sproto {
          * @return calculated CRC16 value
          */
         uint16_t crcKermitCalc(const uint8_t* src, size_t size) {
-            return static_cast<D*>(this)->crcKermitCalc_impl(src, size);
+            return derived().crcKermitCalc_impl(src, size);
         }
 
         uint16_t crcKermitCalc(const char* src, size_t size) {

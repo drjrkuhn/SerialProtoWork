@@ -17,8 +17,8 @@ namespace sproto {
      */
     template <class S>
     class ArduinoSlipProtocol : public SlipProtocolBase<ArduinoSlipProtocol<S>> {
-        typedef SlipProtocolBase<ArduinoSlipProtocol<S>> BASE;
-        friend BASE;
+        typedef SlipProtocolBase<ArduinoSlipProtocol<S>> base_t;
+        friend base_t;
 
      public:
         /**
@@ -36,7 +36,7 @@ namespace sproto {
          * @param timeout readBytesUntil timeout.
          */
         ArduinoSlipProtocol(S& stream, bool use_crc = true, unsigned long timeout = 990)
-            : BASE(use_crc), stream_(stream), timeout_(timeout) {
+            : base_t(use_crc), stream_(stream), timeout_(timeout) {
         }
 
         /** Start the output stream */
